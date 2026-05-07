@@ -1,6 +1,4 @@
-# EfficientPlace Vanilla PPO
-
-Minimal runnable copy for the submission.
+# DiversePlace Implememtation for NIPS2026 Submission
 
 ## Setup
 
