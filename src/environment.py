@@ -33,7 +33,6 @@ class Environment:
 
         self.size_x = [max(1, math.ceil(self.placedb.node_info[node_name]
                            ['x'] / self.ratio)) for node_name in self.macro_name_list]
-        # print(len(self.size_x))
         self.size_y = [max(1, math.ceil(self.placedb.node_info[node_name]
                            ['y'] / self.ratio)) for node_name in self.macro_name_list]
 

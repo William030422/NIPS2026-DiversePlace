@@ -21,97 +21,7 @@ from datetime import datetime
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import scipy.linalg
 import copy
-
-# def calculate_macro_iou(macro_pos_1, macro_pos_2):
-#     """
-#     1. Macro-wise IOU: Mean IoU across matched macros.
-#     """
-#     total_iou = 0.0
-#     num_macros = len(macro_pos_1)
-#
-#     for node_name in macro_pos_1:
-#         if node_name not in macro_pos_2:
-#             continue
-#
-#         x1, y1, w1, h1 = macro_pos_1[node_name]
-#         x2, y2, w2, h2 = macro_pos_2[node_name]
-#
-#         inter_x1 = max(x1, x2)
-#         inter_y1 = max(y1, y2)
-#         inter_x2 = min(x1 + w1, x2 + w2)
-#         inter_y2 = min(y1 + h1, y2 + h2)
-#
-#         inter_area = max(0, inter_x2 - inter_x1) * max(0, inter_y2 - inter_y1)
-#         area1 = w1 * h1
-#         area2 = w2 * h2
-#         union_area = area1 + area2 - inter_area
-#
-#         if union_area > 0:
-#             total_iou += inter_area / union_area
-#
-#     return total_iou / num_macros if num_macros > 0 else 0.0
-#
-# def calculate_canvas_iou(macro_pos_1, macro_pos_2, grid_size):
-#     """
-#     2. Canvas-wise IOU: IoU of the binary occupancy maps.
-#     Treats all macros as 'occupied space' without distinguishing identity.
-#     """
-#     grid1 = np.zeros((grid_size, grid_size), dtype=np.bool_)
-#     grid2 = np.zeros((grid_size, grid_size), dtype=np.bool_)
-#
-#     # Fill Grid 1
-#     for _, (x, y, w, h) in macro_pos_1.items():
-#         # Clip to grid boundaries to be safe
-#         x_end = min(x + w, grid_size)
-#         y_end = min(y + h, grid_size)
-#         grid1[x:x_end, y:y_end] = True
-#
-#     # Fill Grid 2
-#     for _, (x, y, w, h) in macro_pos_2.items():
-#         x_end = min(x + w, grid_size)
-#         y_end = min(y + h, grid_size)
-#         grid2[x:x_end, y:y_end] = True
-#
-#     intersection = np.logical_and(grid1, grid2).sum()
-#     union = np.logical_or(grid1, grid2).sum()
-#
-#     return intersection / union if union > 0 else 0.0
-#
-# def calculate_l1_distance(macro_pos_1, macro_pos_2):
-#     """
-#     3. L1 Distance: Sum of L1 distances of all macro top-left corners.
-#     """
-#     dist_sum = 0.0
-#
-#     for node_name in macro_pos_1:
-#         if node_name in macro_pos_2:
-#             x1, y1, _, _ = macro_pos_1[node_name]
-#             x2, y2, _, _ = macro_pos_2[node_name]
-#             dist_sum += abs(x1 - x2) + abs(y1 - y2)
-#
-#     return dist_sum
-#
-# def compute_vendi_score_from_matrix(K):
-#     """
-#     Computes Vendi Score given a Similarity Matrix K.
-#     """
-#     n = K.shape[0]
-#     if n == 0: return 0.0
-#
-#     # Normalize Kernel: K/n
-#     K_norm = K / n
-#
-#     # Compute Eigenvalues
-#     eigvals = np.linalg.eigvalsh(K_norm)
-#
-#     # Filter small numerical errors and normalize
-#     eigvals = eigvals[eigvals > 1e-10]
-#     p = eigvals / np.sum(eigvals)
-#
-#     entropy = -np.sum(p * np.log(p))
-#     return np.exp(entropy)
 
 def visualize_placements(placements, hpwls, grid_size, save_path, step):
     """
@@ -1610,7 +1520,7 @@ class Trainer:
         collected_hpwls = []
         n_rollouts = 10
 
-        # 1. Perform Rollouts
+        # Perform rollouts.
         for i in range(n_rollouts):
             env.set_fixed_macros(self._select_curriculum_episode_prefix(env))
             raw_s = env.reset()
@@ -1634,46 +1544,7 @@ class Trainer:
             final_metric = env.calculate_hpwl_by_groups()["total"]
             collected_hpwls.append(final_metric)
 
-        # 2. Compute Metrics Matrices
-        # K_macro = np.zeros((n_rollouts, n_rollouts))
-        # K_canvas = np.zeros((n_rollouts, n_rollouts))
-        # dist_l1 = []
-        #
-        # for i in range(n_rollouts):
-        #     for j in range(n_rollouts):
-        #         # Macro-wise IoU (Similarity)
-        #         K_macro[i, j] = calculate_macro_iou(collected_placements[i], collected_placements[j])
-        #
-        #         # Canvas-wise IoU (Similarity)
-        #         K_canvas[i, j] = calculate_canvas_iou(collected_placements[i], collected_placements[j], env.grid)
-        #
-        #         # L1 Distance (Distance) - collect off-diagonals
-        #         if i < j:
-        #             d = calculate_l1_distance(collected_placements[i], collected_placements[j])
-        #             dist_l1.append(d)
-        #
-        # # 3. Compute Scores
-        # vendi_macro = compute_vendi_score_from_matrix(K_macro)
-        # vendi_canvas = compute_vendi_score_from_matrix(K_canvas)
-        # avg_l1_distance = np.mean(dist_l1) if len(dist_l1) > 0 else 0.0
-        #
-        # logging.info(f"Step {loop_idx} Stats:")
-        # logging.info(f"  Vendi (Macro IoU):  {vendi_macro:.4f}")
-        # logging.info(f"  Vendi (Canvas IoU): {vendi_canvas:.4f}")
-        # logging.info(f"  Avg L1 Distance:    {avg_l1_distance:.4f}")
-        #
-        # # 4. Log to WandB and Tensorboard
-        # log_dict = {
-        #     "eval/vendi_macro_iou": vendi_macro,
-        #     "eval/vendi_canvas_iou": vendi_canvas,
-        #     "eval/avg_l1_distance": avg_l1_distance,
-        #     "eval/step": loop_idx
-        # }
-        # self.tb_writer.add_scalar('Eval/Vendi_Macro_IoU', vendi_macro, loop_idx)
-        # self.tb_writer.add_scalar('Eval/Vendi_Canvas_IoU', vendi_canvas, loop_idx)
-        # self.tb_writer.add_scalar('Eval/Avg_L1_Distance', avg_l1_distance, loop_idx)
-
-        # 5. Visualize
+        # Visualize rollouts.
         vis_dir = os.path.join(self.model_dir, "../visualizations")
         os.makedirs(vis_dir, exist_ok=True)
         visualize_placements(collected_placements, collected_hpwls, env.grid,

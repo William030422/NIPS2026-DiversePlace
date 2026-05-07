@@ -30,7 +30,6 @@ def read_node_file(node_file, benchmark):
             node_area[node_id] = node_info[node_id]["x"] * node_info[node_id]["y"]
         node_id_ls.sort(key = lambda x: - node_area[x])
         node_id_ls = node_id_ls[:256] if benchmark == "bigblue2" else node_id_ls[:1024]
-        # node_info = {}
         node_info_tmp = {}
         for node_id in node_id_ls:
             node_info_tmp[node_id] = node_info[node_id]

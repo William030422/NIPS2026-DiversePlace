@@ -331,9 +331,3 @@ class Agent:
 
                 self.actor_lr_scheduler.step()
                 self.critic_lr_scheduler.step()
-
-                # self.tb_writer.add_scalar('Loss/actor_loss', actor_loss, self.training_step)
-                # self.tb_writer.add_scalar('Loss/critic_loss', critic_loss.mean(), self.training_step)
-                # self.tb_writer.add_scalar('Loss/entropy', distr_entropy, self.training_step)
-                # self.tb_writer.add_scalar('Params/lr_actor', self.actor_lr_scheduler.get_last_lr()[0], self.training_step)
-                # self.tb_writer.add_scalar('Params/lr_critic', self.critic_lr_scheduler.get_last_lr()[0], self.training_step)
