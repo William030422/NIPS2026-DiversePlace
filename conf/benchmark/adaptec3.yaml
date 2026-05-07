@@ -1,0 +1,70 @@
+benchmark: adaptec3
+
+grid: 512
+num_macros_to_place: 5
+
+tb_dir: ./workspace/${benchmark}/${now:%m-%d}/${now:%H:%M:%S}
+model_dir: ./workspace/${benchmark}/${now:%m-%d}/${now:%H:%M:%S}/model
+solution_dir: ./workspace/${benchmark}/${now:%m-%d}/${now:%H:%M:%S}/sol
+
+env:
+  _target_: src.Environment
+  benchmark: ${benchmark}
+  benchmark_dir: ../ispd2005free/${benchmark}
+  reward_scale: 10000.0
+  wire_mask_scale: 10000.0
+  num_macros_to_place: ${num_macros_to_place}
+  grid: ${grid}
+  rank_mode: 2
+
+agent:
+  _target_: src.Agent
+  max_grad_norm: 0.5
+  clip_epsilon: 0.2
+  lamda: 0.98
+  entropy_coef: 0.001
+  lr_actor: 0.00007
+  lr_critic: 0.0001
+  actor_lr_anneal_rate: 0.9997
+  critic_lr_anneal_rate: 0.9997
+  num_macros_to_place: 256
+  grid: ${grid}
+  gamma: 0.999
+
+trainer:
+  _target_: main.Trainer
+  num_macros_to_place: ${num_macros_to_place}
+  num_loops: 20800
+  num_episodes_in_loop: 5
+  update_batch_size: 128
+  num_update_epochs: 10
+  solution_pool_size: 5
+  update_frontiers_freq: 4
+  update_frontiers_begin: 200
+  alpha: 0.1
+  model_dir: ${model_dir}
+  solution_dir: ${solution_dir}
+  enable_curriculum: true
+  curriculum_window_size: 750
+  curriculum_increment: 5
+  curriculum_selection_strategy: "top-k"
+  curriculum_top_k: 3
+  curriculum_fixed_macro_count: 2
+  enable_hard_constraint: true
+  protected_macro_count: 5
+  constraint_radius_ratio: 0.25
+  constraint_min_radius: 1
+  enable_adaptive_hard_constraint: true
+  adaptive_large_macro_count: 6
+  visualize_every_episodes: 500
+  enable_diversity_phase: true
+  diversity_phase_ratio: 0.5
+  diversity_quality_eps: 0.05
+  diversity_reference_k: 10
+  diversity_output_k: 5
+  diversity_bonus_lambda: 0.01
+  diversity_bonus_cap_ratio: 0.10
+  diversity_min_refs: 3
+  global_topk_size: 20
+  qd_map_bins: 8
+  enable_prefix_diversity_window0: true
